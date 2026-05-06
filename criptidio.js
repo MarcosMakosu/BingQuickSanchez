@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         BingQuickSanchez 
+// @name         BingQuickSanchez - 30 Buscas
 // @namespace    https://github.com/MarcosMakosu/BingQuickSanchez
-// @version      1.6
-// @description  Buscas automáticas no Bing para Microsoft Rewards PC
+// @version      1.8
+// @description  Buscas automáticas no Bing para Microsoft Rewards (modo discreto)
 // @author       MarcosMakosu
 // @match        https://www.bing.com/*
 // @grant        window.close
@@ -12,13 +12,15 @@
 (() => {
     'use strict';
 
-    const TOTAL_CICLOS = 30;                    // Quantidade de buscas
-    const INTERVALO_MIN = 65 * 1000;            // 65 segundos
-    const INTERVALO_MAX = 95 * 1000;            // 95 segundos
+    const TOTAL_CICLOS = 30;
+    const INTERVALO_FIXO = 70 * 1000;       // 70 segundos (usado na maioria das vezes)
+    const INTERVALO_MIN = 55 * 1000;        // 55 segundos
+    const INTERVALO_MAX = 90 * 1000;        // 90 segundos
+    const DELAY_APOS_API = 1300;            // 1.3 segundos após a API
 
     let ciclosRealizados = 0;
 
-    // Lista de fallback caso as APIs falhem
+    // Lista de fallback
     const assuntosFallback = [
         "resultado lotofácil de hoje",
         "clima amanhã em São Paulo",
@@ -45,13 +47,11 @@
         if (Math.random() < 0.70) {
             try {
                 if (Math.random() < 0.5) {
-                    // Wikipedia PT-BR
                     const res = await fetch('https://pt.wikipedia.org/api/rest_v1/page/random/summary');
                     const page = await res.json();
                     let titulo = page.title.split(' (')[0];
                     return titulo;
                 } else {
-                    // Random Word API
                     const res = await fetch('https://random-word-api.herokuapp.com/word?lang=pt-br&number=2');
                     const words = await res.json();
                     return words.join(" ");
@@ -60,7 +60,6 @@
                 console.warn("⚠️ API falhou, usando fallback");
             }
         }
-        // Fallback
         return assuntosFallback[Math.floor(Math.random() * assuntosFallback.length)];
     }
 
@@ -77,8 +76,12 @@
         return `${num1}-${num2}`;
     }
 
-    function getIntervaloAleatorio() {
-        return Math.floor(Math.random() * (INTERVALO_MAX - INTERVALO_MIN + 1)) + INTERVALO_MIN;
+    function getIntervalo() {
+        // 1 em 3 chances de usar intervalo aleatório
+        if (Math.random() < 1/3) {
+            return Math.floor(Math.random() * (INTERVALO_MAX - INTERVALO_MIN + 1)) + INTERVALO_MIN;
+        }
+        return INTERVALO_FIXO; // Usado na maioria das vezes (2 em 3)
     }
 
     async function fazerBusca() {
@@ -89,6 +92,10 @@
         }
 
         const termo = await assuntoAleatorio();
+        
+        // Delay após resposta da API (útil com internet lenta)
+        await new Promise(resolve => setTimeout(resolve, DELAY_APOS_API));
+
         const q = encodeURIComponent(termo);
         const pq = encodeURIComponent(termo);
         const sc = gerarSC();
@@ -106,7 +113,7 @@
         await fazerBusca();
 
         if (ciclosRealizados < TOTAL_CICLOS) {
-            const proximaEm = getIntervaloAleatorio();
+            const proximaEm = getIntervalo();
             const segundos = Math.floor(proximaEm / 1000);
             
             console.log(`⏳ Próxima busca em ${segundos} segundos...`);
@@ -115,7 +122,7 @@
     }
 
     console.log("%c🚀 BingQuickSanchez iniciado - Modo Seguro (30 buscas)", "color: cyan; font-weight: bold;");
-    console.log("%cIntervalo aleatório: 65 a 95 segundos", "color: gray;");
+    console.log("%c1 em 3 buscas usa intervalo aleatório | Fixo: 70s", "color: gray;");
 
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", () => setTimeout(iniciarCiclo, 4000));

@@ -1,4 +1,4 @@
-# BingQuickSanchez 🚀
+# BingQuickSanchez 2.0
 
 ![Version](https://img.shields.io/badge/version-1.9.2-cyan)
 ![License](https://img.shields.io/badge/license-MIT-green)

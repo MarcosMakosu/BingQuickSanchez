@@ -1,38 +1,59 @@
-# BingQuickSanchez
-Script para realizar buscas automáticas no Bing com termos dinâmicos.
+# BingQuickSanchez 🚀
 
-## Descrição
+![Version](https://img.shields.io/badge/version-1.9.2-cyan)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Platform](https://img.shields.io/badge/platform-Tampermonkey-orange)
 
-Este UserScript realiza buscas aleatórias no Bing de forma automatizada, simulando comportamento humano. A cada ciclo, ele gera um termo de pesquisa diferente utilizando fontes dinâmicas (Wikipedia em português e Random Word API), caindo para uma lista de fallback quando necessário.
+**BingQuickSanchez** é um Userscript desenvolvido para automatizar buscas no microslop Bing de forma discreta e inteligente. O objetivo principal é auxiliar na coleta de pontos do microslop Rewards simulando o comportamento humano.
 
-Ideal para acumular pontos ou rewards em programas de busca do Bing.
+---
 
-## Funcionalidades
+## ✨ Funcionalidades
 
-- Realiza 50 buscas por execução
-- Intervalo de 40 segundos entre buscas
-- Geração dinâmica de termos de pesquisa
-- Duas fontes principais de termos:
-  - Wikipedia PT-BR (páginas aleatórias)
-  - Random Word API (palavras em português)
-- Sistema de fallback com termos fixos
-- Geração realista de parâmetros de URL (cvid, sc, etc.)
-- Fechamento automático da aba ao finalizar
+- **Ciclo de 30 Buscas:** Executa automaticamente a meta diária de buscas.
+- **Persistência de Dados:** Utiliza `localStorage` para não perder a contagem caso a página seja fechada ou recarregada.
+- **Fontes de Termos Híbridas:** 
+  - Busca termos aleatórios via **Wikipedia API**.
+  - Busca palavras via **Random Word API**.
+  - Possui uma lista de **Fallback** interna para garantir o funcionamento offline.
+- **Anti-Bot (Human-Like):** 
+  - Intervalos aleatórios entre 60s e 95s.
+  - Geração dinâmica de CVID (Correlation ID) para cada sessão.
+  - Delays de segurança antes de cada redirecionamento.
+- **Console Debug Pro:** Logs detalhados e coloridos no console do navegador para monitoramento em tempo real.
 
-## Instalação
+---
 
-1. Instale a extensão **Tampermonkey** (ou Violentmonkey) no seu navegador
-2. Clique no ícone do Tampermonkey → "Criar novo script"
-3. Apague todo o conteúdo e cole o código completo do script
-4. Salve (Ctrl + S)
-5. Acesse qualquer página do Bing (`https://www.bing.com/*`)
+## 🚀 Como Instalar
 
-O script iniciará automaticamente após 3 segundos.
+1. Instale uma extensão de gerenciamento de scripts no seu navegador:
+   - [Tampermonkey](https://www.tampermonkey.net/) (Recomendado)
+   - [Violentmonkey](https://violentmonkey.github.io/)
+2. Crie um "Novo Script" no painel da extensão.
+3. Copie o código do arquivo `BingQuickSanchez.user.js` e cole no editor.
+4. Salve e acesse [bing.com](https://www.bing.com).
 
-## Configuração
+---
 
-Você pode ajustar as seguintes constantes no início do script:
+## 🛠️ Detalhes Técnicos (Método Educativo)
 
-```javascript
-const TOTAL_CICLOS = 50;        // Quantidade de buscas
-const INTERVALO_FIXO = 400 * 1000;  // 40 segundos (em milissegundos)
+### Persistência com LocalStorage
+Para que o script saiba em qual busca parou (ex: busca 15 de 30), ele utiliza o armazenamento local do navegador:
+`let ciclosRealizados = parseInt(localStorage.getItem('bing_ciclos')) || 0; `
+### Inteligência de Termos
+O script tenta primeiro fontes externas para que as buscas não sejam repetitivas. Se a API da Wikipedia falhar, ele automaticamente recorre ao array `assuntosFallback`.
+
+### Logs de Monitoramento
+Ao abrir o console (F12), você verá o fluxo de execução organizado por cores:
+- 🔵 **Azul:** Chamadas de API.
+- 🟢 **Verde:** Sucesso e Navegação.
+- 🟣 **Roxo:** Uso de termos de Fallback.
+- 🟠 **Laranja:** Decisões do sistema e gravação de dados.
+
+---
+
+## ⚠️ Isenção de Responsabilidade
+
+Este projeto tem fins puramente educacionais e de estudo de automação com JavaScript. O uso de ferramentas de automação pode violar os termos de serviço do microslop Rewards. Use por sua conta e risco.
+
+---

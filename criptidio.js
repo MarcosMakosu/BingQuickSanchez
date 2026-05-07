@@ -1,26 +1,26 @@
 // ==UserScript==
-// @name         BingQuickSanchez - 30 Buscas
+// @name         BingQuickSanchez 
 // @namespace    https://github.com/MarcosMakosu/BingQuickSanchez
-// @version      1.8.1
-// @description  Buscas automáticas no Bing para Microsoft Rewards (modo discreto)
+// @version      1.9.2
+// @description  Automação com rastreamento detalhado e persistência de dados
 // @author       MarcosMakosu
 // @match        https://www.bing.com/*
 // @grant        window.close
-// @run-at       document-start
+// @run-at       document-idle
 // ==/UserScript==
 
 (() => {
     'use strict';
 
+    // --- CONFIGURAÇÕES ---
     const TOTAL_CICLOS = 30;
-    const INTERVALO_FIXO = 70 * 1000;       // 70 segundos (usado na maioria das vezes)
-    const INTERVALO_MIN = 55 * 1000;        // 55 segundos
-    const INTERVALO_MAX = 90 * 1000;        // 90 segundos
-    const DELAY_APOS_API = 1300;            // 1.3 segundos após a API
+    const INTERVALO_MIN = 60000; 
+    const INTERVALO_MAX = 95000;
+    
+    // --- PERSISTÊNCIA ---
+    let ciclosRealizados = parseInt(localStorage.getItem('bing_ciclos')) || 0;
 
-    let ciclosRealizados = 0;
-
-    // Lista de fallback
+    // Mantida conforme solicitado
     const assuntosFallback = [
         "resultado lotofácil de hoje",
         "clima amanhã em São Paulo",
@@ -39,104 +39,95 @@
         "Marvel novo filme",
         "como investir em ações",
         "viagem barata para o Nordeste",
-        "Grok xAI",
+        "receita de bolo de chocolate",
         "previsão do tempo Rio de Janeiro"
     ];
 
-    async function assuntoAleatorio() {
-        if (Math.random() < 0.70) {
-            try {
-                if (Math.random() < 0.5) {
-                    // Wikipedia PT-BR
-                    const res = await fetch('https://pt.wikipedia.org/api/rest_v1/page/random/summary');
-                    const page = await res.json();
-                    let titulo = page.title.split(' (')[0];
-                    
-                    console.log(`📡 Wikipedia API → ${titulo}`);
-                    return titulo;
-                } else {
-                    // Random Word API
-                    const res = await fetch('https://random-word-api.herokuapp.com/word?lang=pt-br&number=2');
-                    const words = await res.json();
-                    const termo = words.join(" ");
-                    
-                    console.log(`📡 Random Word API → ${termo}`);
-                    return termo;
-                }
-            } catch (e) {
-                console.warn("⚠️ API falhou, usando fallback");
-            }
-        }
+    async function obterTermoAleatorio() {
+        console.log("%c🔍 [DECISÃO] Escolhendo fonte do termo...", "color: #f39c12; font-weight: bold;");
         
-        const termoFallback = assuntosFallback[Math.floor(Math.random() * assuntosFallback.length)];
-        console.log(`📦 Usando fallback → ${termoFallback}`);
-        return termoFallback;
+        const sorteio = Math.random();
+        
+        try {
+            if (sorteio < 0.35) {
+                console.log("%c🌐 [API] Solicitando resumo à Wikipedia...", "color: #3498db;");
+                const res = await fetch('https://pt.wikipedia.org/api/rest_v1/page/random/summary');
+                if (!res.ok) throw new Error("Status " + res.status);
+                const page = await res.json();
+                const titulo = page.title.split(' (')[0];
+                console.log(`%c✅ [WIKI] Termo obtido: "${titulo}"`, "color: #2ecc71;");
+                return titulo;
+            } 
+            else if (sorteio < 0.70) {
+                console.log("%c🌐 [API] Solicitando palavras aleatórias...", "color: #3498db;");
+                const res = await fetch('https://random-word-api.herokuapp.com/word?lang=pt-br&number=2');
+                if (!res.ok) throw new Error("Status " + res.status);
+                const words = await res.json();
+                const termo = words.join(" ");
+                console.log(`%c✅ [RANDOM] Termo obtido: "${termo}"`, "color: #2ecc71;");
+                return termo;
+            }
+        } catch (error) {
+            console.error(`%c❌ [ERRO API] ${error.message}. Recorrendo ao Fallback.`, "color: #e74c3c;");
+        }
+
+        // Caso as APIs falhem ou o sorteio caia aqui
+        const termoF = assuntosFallback[Math.floor(Math.random() * assuntosFallback.length)];
+        console.log(`%c📦 [FALLBACK] Usando lista interna: "${termoF}"`, "color: #9b59b6;");
+        return termoF;
     }
 
     function gerarCvid() {
-        const hex = () => Math.floor(Math.random() * 16).toString(16).toUpperCase();
-        let cvid = '';
-        for (let i = 0; i < 32; i++) cvid += hex();
+        const cvid = Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join('');
+        console.log(`%c🆔 [SESSION] CVID Gerado: ${cvid}`, "color: #7f8c8d; font-size: 10px;");
         return cvid;
     }
 
-    function gerarSC() {
-        const num1 = Math.floor(Math.random() * 15) + 8;
-        const num2 = Math.floor(Math.random() * 9) + 3;
-        return `${num1}-${num2}`;
-    }
-
-    function getIntervalo() {
-        // 1 em 3 chances de usar intervalo aleatório
-        if (Math.random() < 1/3) {
-            return Math.floor(Math.random() * (INTERVALO_MAX - INTERVALO_MIN + 1)) + INTERVALO_MIN;
-        }
-        return INTERVALO_FIXO;
-    }
-
-    async function fazerBusca() {
+    async function executarCiclo() {
         if (ciclosRealizados >= TOTAL_CICLOS) {
-            console.log("%c✅ Todos os 30 ciclos concluídos!", "color: lime; font-size: 16px;");
-            setTimeout(() => window.close(), 3000);
+            console.log("%c🎉 [FINALIZADO] Todas as 30 buscas foram concluídas!", "background: #27ae60; color: white; padding: 10px; border-radius: 5px;");
+            localStorage.removeItem('bing_ciclos');
+            console.log("%c🗑️ [STORAGE] Contador resetado para amanhã.", "color: #7f8c8d;");
+            setTimeout(() => window.close(), 5000);
             return;
         }
 
-        const termo = await assuntoAleatorio();
-        
-        // Delay após resposta da API
-        await new Promise(resolve => setTimeout(resolve, DELAY_APOS_API));
-
-        const q = encodeURIComponent(termo);
-        const pq = encodeURIComponent(termo);
-        const sc = gerarSC();
+        const termo = await obterTermoAleatorio();
         const cvid = gerarCvid();
-
-        const url = `https://www.bing.com/search?q=${q}&qs=n&form=QBRE&sp=-1&ghc=1&lq=0&pq=${pq}&sc=${sc}&sk=&cvid=${cvid}`;
-
-        console.log(`🔎 Ciclo ${ciclosRealizados + 1}/${TOTAL_CICLOS} → ${termo}`);
-
-        window.location.href = url;
-    }
-
-    async function iniciarCiclo() {
+        
         ciclosRealizados++;
-        await fazerBusca();
+        localStorage.setItem('bing_ciclos', ciclosRealizados);
+        console.log(`%c💾 [STORAGE] Progresso salvo: ${ciclosRealizados}/${TOTAL_CICLOS}`, "color: #d35400;");
 
-        if (ciclosRealizados < TOTAL_CICLOS) {
-            const proximaEm = getIntervalo();
-            const segundos = Math.floor(proximaEm / 1000);
-            
-            console.log(`⏳ Próxima busca em ${segundos} segundos...`);
-            setTimeout(iniciarCiclo, proximaEm);
-        }
+        const url = `https://www.bing.com/search?q=${encodeURIComponent(termo)}&cvid=${cvid}&FORM=QBRE`;
+        
+        const delaySeguranca = Math.floor(Math.random() * 2000 + 1500);
+        console.log(`%c🚀 [NAVEGAÇÃO] Preparando redirecionamento em ${(delaySeguranca/1000).toFixed(1)}s...`, "color: #2ecc71; font-weight: bold;");
+        
+        setTimeout(() => {
+            console.log("%c✈️ [PULO] Indo para a busca agora!", "color: #2ecc71;");
+            window.location.href = url;
+        }, delaySeguranca);
     }
 
-    console.log("%c🚀 BingQuickSanchez iniciado - Modo Seguro (30 buscas)", "color: cyan; font-weight: bold;");
-    console.log("%c1 em 3 buscas usa intervalo aleatório | Fixo: 70s | v1.8.1", "color: gray;");
+    function agendarProxima() {
+        const espera = Math.floor(Math.random() * (INTERVALO_MAX - INTERVALO_MIN + 1)) + INTERVALO_MIN;
+        console.log("%c------------------------------------------------", "color: #bdc3c7;");
+        console.log(`%c⏱️ [TIMER] Próxima busca em ${(espera / 1000).toFixed(0)} segundos...`, "color: #34495e; font-style: italic;");
+        console.log("%c------------------------------------------------", "color: #bdc3c7;");
+        setTimeout(executarCiclo, espera);
+    }
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", () => setTimeout(iniciarCiclo, 4000));
+    // --- INICIALIZAÇÃO ---
+    console.log("%c[SISTEMA] BingQuickSanchez v1.9.2 Carregado", "background: #34495e; color: #ecf0f1; padding: 5px;");
+
+    // Verifica se é uma página de busca (após o redirecionamento) ou a inicial
+    if (window.location.search.includes("q=")) {
+        console.log("%c📍 [ESTADO] Página de resultados detectada.", "color: #16a085;");
+        agendarProxima();
     } else {
-        setTimeout(iniciarCiclo, 4000);
+        console.log("%c🏠 [ESTADO] Fora de busca. Iniciando rotina...", "color: #16a085;");
+        // Aguarda o Bing carregar seus elementos básicos antes de agir
+        setTimeout(executarCiclo, 3000);
     }
 })();

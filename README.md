@@ -1,6 +1,6 @@
 # BingQuickSanchez 2.0
 
-![Version](https://img.shields.io/badge/version-1.9.2-cyan)
+![Version](https://img.shields.io/badge/version-2.2.0-cyan)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Tampermonkey-orange)
 

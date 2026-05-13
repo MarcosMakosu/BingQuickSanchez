@@ -14,7 +14,7 @@
 
     // --- CONFIGURAÇÕES ---
     const TOTAL_CICLOS = 30;
-    const INTERVALO_MIN = 60000;
+    const INTERVALO_MIN = 60000; 
     const INTERVALO_MAX = 95000;
     const TEMPO_VISUALIZACAO = 10000;
 
